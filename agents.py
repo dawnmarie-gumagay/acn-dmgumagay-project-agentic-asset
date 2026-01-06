@@ -3,11 +3,15 @@ CrewAI Agent Definitions for DevOps Automation
 Defines specialized agents for analyzing requirements and generating IaC scripts
 """
 from crewai import Agent
-from crew import get_ollama_llm
+from crewai import LLM
 from config import Config
 
-# Initialize LLM
-llm = get_ollama_llm()
+# Initialize LLM using CrewAI's LLM wrapper for Ollama
+llm = LLM(
+    model=f"ollama/{Config.DEFAULT_MODEL}",
+    base_url=Config.OLLAMA_BASE_URL,
+    api_key=Config.OLLAMA_API_KEY
+)
 
 # Requirements Analyzer Agent
 requirements_analyzer = Agent(

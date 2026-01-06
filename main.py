@@ -113,7 +113,7 @@ def run_crew(user_prompt):
         agents=[requirements_analyzer, iac_generator, validator],
         tasks=[analysis_task, generation_task, validation_task],
         process=Process.sequential,
-        verbose=Config.VERBOSE_LEVEL
+        verbose=True
     )
     
     # Execute
