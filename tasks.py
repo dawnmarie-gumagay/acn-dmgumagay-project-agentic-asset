@@ -3,7 +3,7 @@ Task Definitions for DevOps Automation Workflow
 Defines the sequential tasks for processing deployment requests
 """
 from crewai import Task
-from agents import requirements_analyzer, iac_generator, validator
+from agents import requirements_analyzer, iac_generator, validator, remediation_agent
 
 def create_analysis_task(user_prompt):
     """
@@ -87,3 +87,93 @@ def create_validation_task():
         agent=validator,
         expected_output='Validation result with either the approved manifest or a list of issues to fix'
     )
+
+
+def create_monitoring_task(deployment_status):
+    """
+    Create task for monitoring deployment health
+    
+    Args:
+        deployment_status (str): Simulated deployment status information
+        
+    Returns:
+        Task: Monitoring task instance
+    """
+    return Task(
+        description=f"""Analyze the following deployment status and determine if there are any failures:
+        
+        Deployment Status:
+        {deployment_status}
+        
+        Check for common failure patterns:
+        - OOMKilled: Pods killed due to out of memory
+        - CrashLoopBackOff: Pods repeatedly crashing
+        - ImagePullBackOff: Unable to pull container image
+        - Pending: Pods stuck in pending state (resource constraints)
+        - Error: General deployment errors
+        
+        If failures detected, respond with "FAILURE DETECTED: [failure type]" and describe the issue.
+        If deployment is healthy, respond with "DEPLOYMENT HEALTHY".""",
+        agent=remediation_agent,
+        expected_output='Health status indicating either deployment success or specific failure type detected'
+    )
+
+
+def create_diagnosis_task(failure_info):
+    """
+    Create task for diagnosing deployment failure
+    
+    Args:
+        failure_info (str): Information about the detected failure
+        
+    Returns:
+        Task: Diagnosis task instance
+    """
+    return Task(
+        description=f"""Diagnose the following deployment failure and identify the root cause:
+        
+        Failure Information:
+        {failure_info}
+        
+        Provide:
+        1. Root cause analysis - Why did this failure occur?
+        2. Impact assessment - What is affected?
+        3. Recommended fix - What specific changes are needed?
+        
+        Be specific and actionable in your diagnosis.""",
+        agent=remediation_agent,
+        expected_output='Detailed diagnosis with root cause, impact, and specific remediation steps'
+    )
+
+
+def create_remediation_task(diagnosis_result, original_manifest):
+    """
+    Create task for applying remediation fixes
+    
+    Args:
+        diagnosis_result (str): Diagnosis from previous task
+        original_manifest (str): The original YAML manifest that failed
+        
+    Returns:
+        Task: Remediation task instance
+    """
+    return Task(
+        description=f"""Based on the diagnosis, generate a corrected Kubernetes manifest:
+        
+        Diagnosis:
+        {diagnosis_result}
+        
+        Original Manifest:
+        {original_manifest}
+        
+        Apply the recommended fixes to create a corrected manifest. Common fixes:
+        - For OOMKilled: Increase memory limits (e.g., 512Mi → 1Gi)
+        - For CrashLoopBackOff: Fix configuration or add init containers
+        - For ImagePullBackOff: Correct image name or add imagePullSecrets
+        - For Pending: Reduce resource requests or increase replicas
+        
+        Output the complete corrected YAML manifest with fixes applied.""",
+        agent=remediation_agent,
+        expected_output='A corrected Kubernetes manifest with remediation fixes applied'
+    )
+

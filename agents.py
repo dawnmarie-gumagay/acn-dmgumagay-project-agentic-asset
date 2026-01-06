@@ -51,3 +51,19 @@ validator = Agent(
     verbose=Config.VERBOSE_LEVEL > 0,
     allow_delegation=Config.ALLOW_DELEGATION
 )
+
+# Remediation Agent (Self-Healing)
+remediation_agent = Agent(
+    role='DevOps Remediation Specialist',
+    goal='Diagnose deployment failures and propose automated fixes to restore service health',
+    backstory="""You are a seasoned Site Reliability Engineer (SRE) with deep expertise 
+    in troubleshooting Kubernetes deployments. You can quickly diagnose common failure 
+    patterns like OOMKilled pods, CrashLoopBackOff errors, ImagePullBackOff issues, 
+    and resource constraints. For each failure, you provide specific remediation actions 
+    such as adjusting resource limits, fixing configuration errors, scaling replicas, 
+    or suggesting alternative approaches. You think systematically about root causes 
+    and prefer permanent fixes over temporary workarounds.""",
+    llm=llm,
+    verbose=Config.VERBOSE_LEVEL > 0,
+    allow_delegation=Config.ALLOW_DELEGATION
+)

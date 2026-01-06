@@ -11,9 +11,11 @@ This project demonstrates an agentic AI solution that automates DevOps tasks thr
 - 🤖 **Multi-Agent System**: Specialized AI agents for requirements analysis, IaC generation, and validation
 - 📝 **Single-Prompt Operation**: Input your deployment needs in natural language
 - 🚀 **Kubernetes Manifest Generation**: Automatically creates deployment YAML files
+- � **Self-Healing Capability**: Detects failures and automatically applies remediation fixes
 - 💾 **File Output**: Saves results and generated manifests with timestamps
 - 📊 **Detailed Logging**: Tracks execution flow and performance metrics
 - ✅ **Validation**: Ensures generated manifests follow best practices
+- 🔄 **Retry Logic**: Exponential backoff for deployment retry attempts
 
 ## Architecture
 
@@ -21,10 +23,20 @@ This project demonstrates an agentic AI solution that automates DevOps tasks thr
 1. **Requirements Analyzer**: Extracts deployment specifications from user prompts
 2. **IaC Generator**: Creates Kubernetes deployment manifests
 3. **Validator**: Validates generated configurations for correctness
+4. **Remediation Agent**: Diagnoses failures and applies automated fixes
 
 ### Workflow
+
+**Standard Mode:**
 ```
 User Prompt → Analysis → Generation → Validation → YAML Output
+```
+
+**Self-Healing Mode:**
+```
+User Prompt → Analysis → Generation → Validation → Deploy → Monitor
+             ↓ (If failure detected)
+          Diagnose → Remediate → Retry Deploy → Monitor → Success
 ```
 
 ## Prerequisites
@@ -87,16 +99,36 @@ You should see:
 
 ## Usage
 
-### Basic Usage
+### Basic Usage (Standard Mode)
 
-Run the main script:
+Run the main script to generate manifests:
 ```bash
 python main.py
 ```
 
+### Self-Healing Mode
+
+Run with automatic failure detection and remediation:
+```bash
+python main_with_healing.py
+```
+
+This mode will:
+1. Generate and validate the manifest
+2. Simulate deployment
+3. Monitor for failures
+4. Automatically diagnose issues
+5. Apply fixes and retry (up to 3 attempts)
+6. Log all remediation actions
+
 ### Custom Prompts
 
-Edit `main.py` and modify the `user_prompt` variable:
+Provide custom deployment requirements as command-line arguments:
+```bash
+python main_with_healing.py "Deploy a Node.js app with 5 replicas, 1Gi memory, 500m CPU"
+```
+
+Or edit the script and modify the `user_prompt` variable:
 ```python
 user_prompt = "Deploy a Java Spring Boot application with 3 replicas, needs 512Mi memory and 500m CPU"
 ```
@@ -116,7 +148,9 @@ user_prompt = "Deploy a Java Spring Boot application with 3 replicas, needs 512M
 
 ## Output
 
-The system generates two files in the `outputs/` directory:
+The system generates files in the `outputs/` directory:
+
+### Standard Mode Output
 
 1. **result_TIMESTAMP.json**: Complete execution details
    ```json
@@ -140,24 +174,58 @@ The system generates two files in the `outputs/` directory:
      ...
    ```
 
+### Self-Healing Mode Output
+
+1. **remediation_log_TIMESTAMP.json**: Detailed healing audit log
+   ```json
+   {
+     "timestamp": "2026-01-07T15:00:00",
+     "user_prompt": "Deploy a Java Spring Boot app...",
+     "max_retries": 3,
+     "attempts": [
+       {
+         "attempt_number": 1,
+         "deployment_status": "FAILED - OOMKilled",
+         "healing_attempted": true,
+         "diagnosis": "Memory limit too low",
+         "remediation": "Increased memory from 512Mi to 1Gi"
+       },
+       {
+         "attempt_number": 2,
+         "deployment_status": "SUCCESS",
+         "result": "SUCCESS"
+       }
+     ],
+     "final_status": "SUCCESS",
+     "total_attempts": 2,
+     "execution_time_seconds": 180.5
+   }
+   ```
+
+2. **healed_deployment_TIMESTAMP.yaml**: Final corrected manifest with fixes applied
+
 ## Project Structure
 
 ```
 AgenticAI-DevOps/
-├── .env                    # Environment variables (not in git)
-├── .env.template           # Template for environment setup
-├── .gitignore             # Git ignore rules
-├── requirements.txt        # Python dependencies
-├── config.py              # Configuration management
-├── crew.py                # LLM connection factory
-├── agents.py              # Agent definitions
-├── tasks.py               # Task definitions
-├── main.py                # Main orchestrator
-├── test_connection.py     # Connection test script
-├── outputs/               # Generated results (not in git)
+├── .env                      # Environment variables (not in git)
+├── .env.template             # Template for environment setup
+├── .gitignore               # Git ignore rules
+├── requirements.txt          # Python dependencies
+├── config.py                # Configuration management
+├── crew.py                  # LLM connection factory
+├── agents.py                # Agent definitions (4 agents)
+├── tasks.py                 # Task definitions (includes healing tasks)
+├── main.py                  # Main orchestrator (standard mode)
+├── main_with_healing.py     # Self-healing orchestrator
+├── test_connection.py       # Connection test script
+├── test_healing.py          # Failure scenario documentation
+├── outputs/                 # Generated results (not in git)
 │   ├── result_*.json
-│   └── deployment_*.yaml
-└── crew_execution.log     # Execution logs
+│   ├── deployment_*.yaml
+│   ├── remediation_log_*.json
+│   └── healed_deployment_*.yaml
+└── crew_execution.log       # Execution logs
 ```
 
 ## Configuration
@@ -175,6 +243,38 @@ Set `VERBOSE_LEVEL` in `.env`:
 - `0` - Minimal output
 - `1` - Standard output
 - `2` - Detailed logs (recommended for debugging)
+
+### Self-Healing Configuration
+
+The self-healing system uses:
+- **Max Retries**: 3 attempts (configurable in `main_with_healing.py`)
+- **Backoff Strategy**: Exponential (1s, 2s, 4s, 8s max)
+- **Supported Failure Types**:
+  - OOMKilled (Out of Memory)
+  - CrashLoopBackOff (Configuration errors)
+  - ImagePullBackOff (Image not found)
+  - Pending (Resource constraints)
+  - Liveness/Readiness probe failures
+
+### Extending Self-Healing
+
+To connect to a real Kubernetes cluster, modify `simulate_deployment()` in `main_with_healing.py`:
+
+```python
+from kubernetes import client, config
+
+def simulate_deployment(manifest, retry_count=0):
+    # Load kubeconfig
+    config.load_kube_config()
+    
+    # Create API client
+    api = client.AppsV1Api()
+    
+    # Apply manifest
+    # ... (implementation details)
+    
+    return success, status
+```
 
 ## Troubleshooting
 
@@ -203,7 +303,14 @@ pip install -r requirements.txt --force-reinstall
 
 ### Running Tests
 ```bash
+# Test connection to Ollama Cloud
 python test_connection.py
+
+# View failure scenarios documentation
+python test_healing.py
+
+# Test self-healing workflow
+python main_with_healing.py
 ```
 
 ### Checking Configuration
@@ -218,19 +325,25 @@ python crew.py
 
 ## Roadmap
 
-### Phase 1 (Current)
+### Phase 1 (Completed) ✅
 - ✅ Basic multi-agent setup
 - ✅ Kubernetes manifest generation
 - ✅ File output capability
 - ✅ Logging and monitoring
+- ✅ Self-healing capabilities (Simulated)
+- ✅ Failure detection and remediation
+- ✅ Retry logic with exponential backoff
+- ✅ Audit logging for healing actions
 
-### Phase 2 (Future)
-- [ ] Self-healing capabilities
-- [ ] Multiple cloud providers
+### Phase 2 (Future) 🚧
+- [ ] Real Kubernetes cluster integration (kubectl/API)
+- [ ] Multiple cloud providers (AWS, Azure, GCP)
 - [ ] Terraform support
 - [ ] CI/CD pipeline integration
-- [ ] Web interface
-- [ ] Real deployment execution
+- [ ] Web interface for user interactions
+- [ ] Advanced monitoring and alerting
+- [ ] Performance optimization (parallel agents)
+- [ ] Integration with Accenture-approved LLMs
 
 ## Contributing
 
