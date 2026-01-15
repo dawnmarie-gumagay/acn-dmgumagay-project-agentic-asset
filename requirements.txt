@@ -3,3 +3,11 @@ crewai-tools
 python-dotenv>=1.0.0
 langchain-ollama
 litellm
+litellm[proxy]
+fastapi>=0.95.0
+
+# Testing dependencies
+pytest>=8.0.0
+pytest-cov>=4.1.0
+pytest-mock>=3.12.0
+pytest-xdist>=3.5.0  # Parallel test execution
