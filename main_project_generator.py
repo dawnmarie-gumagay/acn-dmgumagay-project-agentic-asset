@@ -239,11 +239,43 @@ def generate_project(user_requirements: str, output_dir: str, template_type: str
         verbose=True
     )
     
-    # Execute crew
+    # Execute crew with retry logic
     logger.info("Executing AI agent workflow...")
-    crew_result = crew.kickoff()
+    max_retries = 2
+    retry_count = 0
+    crew_result = None
+    last_error = None
     
-    logger.info("\n✅ AI generation completed")
+    while retry_count <= max_retries:
+        try:
+            if retry_count > 0:
+                logger.info(f"\n🔄 Retry attempt {retry_count}/{max_retries}...")
+            
+            crew_result = crew.kickoff()
+            logger.info("\n✅ AI generation completed")
+            break  # Success, exit retry loop
+            
+        except Exception as e:
+            last_error = e
+            error_msg = str(e)
+            
+            if 'timeout' in error_msg.lower() or 'timed out' in error_msg.lower():
+                logger.error(f"⚠️ Timeout error on attempt {retry_count + 1}: {e}")
+                retry_count += 1
+                
+                if retry_count <= max_retries:
+                    logger.info(f"⏳ Waiting 10 seconds before retry...")
+                    import time
+                    time.sleep(10)
+                    continue
+            else:
+                # Non-timeout error, don't retry
+                logger.error(f"❌ Non-timeout error: {e}")
+                raise
+    
+    if crew_result is None:
+        logger.error(f"❌ All retry attempts failed. Last error: {last_error}")
+        raise Exception(f"AI generation failed after {max_retries + 1} attempts: {last_error}")
     
     # Phase 2: Parse AI output and extract components
     logger.info("\n🔧 Phase 2: Extracting and Organizing Generated Content")

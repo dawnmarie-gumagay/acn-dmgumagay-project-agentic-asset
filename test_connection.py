@@ -29,7 +29,7 @@ def test_ollama_connection():
         # Test with a simple prompt
         print("\n3. Testing with simple prompt...")
         test_prompt = "Say 'Connection successful!' and nothing else."
-        response = llm.invoke(test_prompt)
+        response = llm.invoke(test_prompt, reasoning=False)
         print(f"   ✓ Response received: {response}")
         
         print("\n" + "=" * 60)

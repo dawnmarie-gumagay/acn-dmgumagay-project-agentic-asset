@@ -3,7 +3,7 @@ Ollama Cloud LLM Connection Factory
 Provides LLM instances for CrewAI agents
 """
 import os
-from langchain_ollama import OllamaLLM
+from langchain_ollama import ChatOllama
 from config import Config
 
 
@@ -15,17 +15,18 @@ def get_ollama_llm(model=None):
         model (str): Model name to use. Defaults to Config.DEFAULT_MODEL
         
     Returns:
-        OllamaLLM: Configured LLM instance
+        ChatOllama: Configured LLM instance
     """
     if model is None:
         model = Config.DEFAULT_MODEL
     
-    return OllamaLLM(
+    return ChatOllama(
         base_url=Config.OLLAMA_BASE_URL,
         model=model,
         headers={
             "Authorization": f"Bearer {Config.OLLAMA_API_KEY}"
-        }
+        },
+        reasoning=True,
     )
 
 
