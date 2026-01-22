@@ -46,7 +46,7 @@ class ProjectGenerator:
                 elif isinstance(content, str):
                     # It's a file with content
                     item_path.parent.mkdir(parents=True, exist_ok=True)
-                    item_path.write_text(content)
+                    item_path.write_text(content, encoding='utf-8')
                     self.created_files.append(str(item_path))
                     logger.info(f"Created file: {item_path}")
         
@@ -63,7 +63,7 @@ class ProjectGenerator:
         """
         file_path = self.base_path / relative_path
         file_path.parent.mkdir(parents=True, exist_ok=True)
-        file_path.write_text(content)
+        file_path.write_text(content, encoding='utf-8')
         self.created_files.append(str(file_path))
         logger.info(f"Created file: {file_path}")
     
