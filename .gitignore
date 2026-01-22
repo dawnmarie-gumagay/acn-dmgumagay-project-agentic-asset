@@ -33,6 +33,7 @@ wheels/
 outputs/
 results/
 *.log
+generated-projects/
 
 # IDE
 .vscode/
