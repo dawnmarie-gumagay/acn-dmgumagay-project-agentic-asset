@@ -41,7 +41,7 @@ User Prompt → Analysis → Generation → Validation → Deploy → Monitor
 
 ## Prerequisites
 
-- Python 3.10 or higher
+- Python 3.10 < 3.14
 - pip package manager
 - Ollama Cloud account and API key
 - Git (for version control)
