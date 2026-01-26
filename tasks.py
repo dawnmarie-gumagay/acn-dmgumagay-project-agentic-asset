@@ -73,19 +73,17 @@ def create_app_generation_task():
             Task: App Generation Instance
     """
     return Task(
-        description="""Generate a simple application codebase along with a Dockerfile based on the following requirements:
+       description="""Based on the analyzed requirements, you MUST use the provided tools to create actual files. Do NOT output any code or Dockerfile content as text in your response.
 
-        1. Application Type: must be coming from the analyzed requirements (e.g., Node.js, Python, Java)
-        2. Functionality: A basic "Hello World" application that listens on the specified
-              port and responds to HTTP requests.
-        3. Dockerfile: Create a Dockerfile that containerizes the application, specifying
-              the base image, copying the code, installing dependencies, and exposing the required port.
-        4. Instructions: Provide brief instructions on how to build and run the Docker container.
-        5. Ensure the code is clean, well-commented, and follows best practices for the chosen language.
-        6. Must be able to be deployed using the generated Kubernetes manifest.
-        7. Completely generate the code files, folder structure, dockerfile and clear instructions on how to build and run the Docker container.""",
+        1. Application Type: Use the analyzed requirements (e.g., Node.js, Python, Java)
+        2. Functionality: Create a basic "Hello World" application that listens on the specified port and responds to HTTP requests.
+        3. Call the SaveAppCode tool for each source file (e.g., filename='app.js', code='[generated code]', subfolder='app')
+        4. Call the CreateDockerfile tool with the appropriate content (app_type='[type]', port='[port]', content='[dockerfile content]')
+        5. Ensure the code is clean, well-commented, and follows best practices.
+        6. The generated files must be compatible with the Kubernetes manifest.
+        7. After tool calls, provide build and run instructions referencing the created files.""",
         agent=app_generator,
-        expected_output="""A simple application codebase (including source code files and a Dockerfile) along with instructions on how to build and run the Docker container.
+        expected_output="""Tool call confirmations and build/run instructions (no code content in response).
         """
     )
 

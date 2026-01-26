@@ -14,8 +14,6 @@ llm = LLM(
     api_key=Config.OLLAMA_API_KEY
 )
 
-#Initialize the file writer tool
-file_writer_tool = FileWriterTool()
 
 # Requirements Analyzer Agent
 requirements_analyzer = Agent(

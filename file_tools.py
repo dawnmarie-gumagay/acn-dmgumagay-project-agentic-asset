@@ -1,4 +1,4 @@
-from crewai_tools import tool
+from crewai.tools import tool
 import os
 from datetime import datetime
 
