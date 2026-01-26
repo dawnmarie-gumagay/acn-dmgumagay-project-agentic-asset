@@ -64,6 +64,24 @@ def create_generation_task():
         expected_output='A complete, valid Kubernetes Deployment YAML manifest'
     )
 
+def create_code_app_generation_task();
+    """
+        Create task for generating a sample project which can be used to validate
+        if infrastructure runs smoothly.
+
+        Returns: 
+            Task: Code App Generation Instance
+    """
+    return Task(
+        description="""Based on the given code language in the requirements, generate a sample code project
+        that can be used by kubernetes cluster that was generated.
+        
+        This must follow the following:
+        1. Simple code project
+        2. 
+        """
+    )
+
 
 def create_validation_task():
     """

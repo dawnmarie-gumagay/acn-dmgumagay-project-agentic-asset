@@ -39,6 +39,19 @@ iac_generator = Agent(
     allow_delegation=Config.ALLOW_DELEGATION
 )
 
+#Developer Agent
+app_generator = Agent(
+    role = 'Application Code Generator',
+    goal='Generate a sample running code based on the given code language requirement'
+    backstory="""You are a code developer who is an expert on creating a clean, simple code to be used
+    for testing the infrastructure. You follow the best practices for the required code language.
+    You generate a code that can be used directly in the kubernetes cluster.
+    """,
+    llm=llm,
+    verbose=Config.VERBOSE_LEVEL > 0,
+    allow_delegation=Config.ALLOW_DELEGATION
+)
+
 # Validator Agent
 validator = Agent(
     role='Configuration Validator',
@@ -51,6 +64,7 @@ validator = Agent(
     verbose=Config.VERBOSE_LEVEL > 0,
     allow_delegation=Config.ALLOW_DELEGATION
 )
+
 
 # Remediation Agent (Self-Healing)
 remediation_agent = Agent(
