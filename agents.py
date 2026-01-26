@@ -42,10 +42,10 @@ iac_generator = Agent(
 #Developer Agent
 app_generator = Agent(
     role = 'Application Code Generator',
-    goal='Generate a sample running code based on the given code language requirement'
-    backstory="""You are a code developer who is an expert on creating a clean, simple code to be used
-    for testing the infrastructure. You follow the best practices for the required code language.
-    You generate a code that can be used directly in the kubernetes cluster.
+    goal='Generate a simple application codebase and dockerfile based on user requirements for testing infrastructure',
+    backstory="""You are a skilled software developer with experience in creating simple,
+    functional applications in various programming languages. You can quickly generate a codebase
+    that meets user requirements, along with a Dockerfile to containerize the application for deployment.
     """,
     llm=llm,
     verbose=Config.VERBOSE_LEVEL > 0,

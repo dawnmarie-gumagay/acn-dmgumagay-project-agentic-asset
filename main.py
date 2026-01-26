@@ -6,8 +6,8 @@ import os
 import json
 from datetime import datetime
 from crewai import Crew, Process
-from agents import requirements_analyzer, iac_generator, validator
-from tasks import create_analysis_task, create_generation_task, create_validation_task
+from agents import requirements_analyzer, iac_generator, app_generator, validator
+from tasks import create_analysis_task, create_generation_task, create_app_generation_task, create_validation_task
 from config import Config
 import logging
 
@@ -102,16 +102,18 @@ def run_crew(user_prompt):
     # Create tasks with user prompt
     analysis_task = create_analysis_task(user_prompt)
     generation_task = create_generation_task()
+    app_generation_task = create_app_generation_task()
     validation_task = create_validation_task()
     
     # Link tasks in sequence
     generation_task.context = [analysis_task]
+    app_generation_task.context = [analysis_task]
     validation_task.context = [generation_task]
     
     # Assemble the crew
     crew = Crew(
-        agents=[requirements_analyzer, iac_generator, validator],
-        tasks=[analysis_task, generation_task, validation_task],
+        agents=[requirements_analyzer, iac_generator, app_generator, validator],
+        tasks=[analysis_task, generation_task, app_generation_task, validation_task],
         process=Process.sequential,
         verbose=True
     )

@@ -3,7 +3,7 @@ Task Definitions for DevOps Automation Workflow
 Defines the sequential tasks for processing deployment requests
 """
 from crewai import Task
-from agents import requirements_analyzer, iac_generator, validator, remediation_agent
+from agents import requirements_analyzer, iac_generator, validator, remediation_agent, app_generator
 
 def create_analysis_task(user_prompt):
     """
@@ -64,21 +64,27 @@ def create_generation_task():
         expected_output='A complete, valid Kubernetes Deployment YAML manifest'
     )
 
-def create_code_app_generation_task();
+def create_app_generation_task():
     """
-        Create task for generating a sample project which can be used to validate
+        Create task for generating a sample codebase and dockerfile which can be used to validate
         if infrastructure runs smoothly.
 
         Returns: 
             Task: Code App Generation Instance
     """
     return Task(
-        description="""Based on the given code language in the requirements, generate a sample code project
-        that can be used by kubernetes cluster that was generated.
-        
-        This must follow the following:
-        1. Simple code project
-        2. 
+        description="""Generate a simple application codebase along with a Dockerfile based on the following requirements:
+
+        1. Application Type: must be coming from the analyzed requirements (e.g., Node.js, Python, Java)
+        2. Functionality: A basic "Hello World" application that listens on the specified
+              port and responds to HTTP requests.
+        3. Dockerfile: Create a Dockerfile that containerizes the application, specifying
+              the base image, copying the code, installing dependencies, and exposing the required port.
+        4. Instructions: Provide brief instructions on how to build and run the Docker container.
+        5. Ensure the code is clean, well-commented, and follows best practices for the chosen language.
+        6. Must be able to be deployed using the generated Kubernetes manifest.""",
+        agent=app_generator,
+        expected_output="""A simple application codebase (including source code files and a Dockerfile) along with instructions on how to build and run the Docker container.
         """
     )
 
