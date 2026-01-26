@@ -4,7 +4,7 @@ Defines specialized agents for analyzing requirements and generating IaC scripts
 """
 from crewai import Agent
 from crewai import LLM
-from crewai_tools import FileWriterTool
+from file_tools import write_file, create_dockerfile, save_app_code
 from config import Config
 
 # Initialize LLM using CrewAI's LLM wrapper for Ollama
@@ -47,7 +47,7 @@ iac_generator = Agent(
 app_generator = Agent(
     role = 'Application Code Generator',
     goal='Generate a simple application codebase and dockerfile based on user requirements for testing infrastructure',
-    tools=[file_writer_tool],
+    tools=[write_file, create_dockerfile, save_app_code],
     backstory="""You are a skilled software developer with experience in creating simple,
     functional applications in various programming languages. You can quickly generate a codebase
     that meets user requirements, along with a Dockerfile to containerize the application for deployment.
