@@ -70,7 +70,7 @@ def create_app_generation_task():
         if infrastructure runs smoothly.
 
         Returns: 
-            Task: Code App Generation Instance
+            Task: App Generation Instance
     """
     return Task(
         description="""Generate a simple application codebase along with a Dockerfile based on the following requirements:
@@ -82,7 +82,8 @@ def create_app_generation_task():
               the base image, copying the code, installing dependencies, and exposing the required port.
         4. Instructions: Provide brief instructions on how to build and run the Docker container.
         5. Ensure the code is clean, well-commented, and follows best practices for the chosen language.
-        6. Must be able to be deployed using the generated Kubernetes manifest.""",
+        6. Must be able to be deployed using the generated Kubernetes manifest.
+        7. Completely generate the code files, folder structure, dockerfile and clear instructions on how to build and run the Docker container.""",
         agent=app_generator,
         expected_output="""A simple application codebase (including source code files and a Dockerfile) along with instructions on how to build and run the Docker container.
         """
