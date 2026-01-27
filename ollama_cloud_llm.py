@@ -97,7 +97,6 @@ class OllamaCloudGenerateLLM(BaseLLM):
 
         # Non-streaming path
         else:
-            print("non-streaming response")
             r = requests.post(
                 f"{self.endpoint}/api/generate",
                 headers=headers,

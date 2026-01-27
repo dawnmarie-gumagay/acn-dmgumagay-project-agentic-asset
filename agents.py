@@ -5,7 +5,6 @@ Defines specialized agents for analyzing requirements and generating IaC scripts
 
 from crewai import Agent
 from ollama_cloud_llm import OllamaCloudGenerateLLM
-from crewai_tools import FileWriterTool
 from config import Config
 
 # Initialize using custom LLM
@@ -16,9 +15,6 @@ llm = OllamaCloudGenerateLLM(
     stream=False,
 )
 
-
-# Initialize File Writer Tool
-file_writer_tool = FileWriterTool(llm=llm, verbose=Config.VERBOSE_LEVEL > 0)
 
 
 # Requirements Analyzer Agent
@@ -42,33 +38,6 @@ iac_generator = Agent(
     efficient, and production-ready YAML manifests. You follow best practices for 
     Kubernetes deployments including proper resource limits, health checks, labels, 
     and annotations. You generate valid YAML that can be directly applied to a cluster.""",
-    llm=llm,
-    verbose=Config.VERBOSE_LEVEL > 0,
-    allow_delegation=Config.ALLOW_DELEGATION,
-)
-
-# Developer Agent
-app_generator = Agent(
-    role="Application Code Generator",
-    goal="Generate a simple application codebase and dockerfile based on user requirements for testing infrastructure",
-    backstory="""You are a skilled software developer with experience in creating simple,
-    functional applications in various programming languages. You can quickly generate a codebase
-    that meets user requirements, along with a Dockerfile to containerize the application for deployment.
-    """,
-    llm=llm,
-    verbose=Config.VERBOSE_LEVEL > 0,
-    allow_delegation=Config.ALLOW_DELEGATION,
-)
-
-# Writer Agent
-writer_agent = Agent(
-    role="File Creation Specialist",
-    goal="Create and manage application code files and Dockerfiles based on user specifications",
-    # tools=[write_file, create_dockerfile, save_app_code],
-    tools=[file_writer_tool],
-    backstory="""You are an expert in file management and code generation. You excel at creating well-structured 
-    application code files and Dockerfiles based on user requirements. You ensure that all files are correctly formatted 
-    and ready for deployment in a containerized environment.""",
     llm=llm,
     verbose=Config.VERBOSE_LEVEL > 0,
     allow_delegation=Config.ALLOW_DELEGATION,
