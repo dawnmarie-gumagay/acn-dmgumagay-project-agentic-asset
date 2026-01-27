@@ -2,16 +2,18 @@
 Task Definitions for DevOps Automation Workflow
 Defines the sequential tasks for processing deployment requests
 """
+
 from crewai import Task
 from agents import requirements_analyzer, iac_generator, validator, remediation_agent
+
 
 def create_analysis_task(user_prompt):
     """
     Create task for analyzing user requirements
-    
+
     Args:
         user_prompt (str): User's deployment request
-        
+
     Returns:
         Task: Analysis task instance
     """
@@ -31,14 +33,14 @@ def create_analysis_task(user_prompt):
         
         Provide a clear, structured summary of the deployment requirements.""",
         agent=requirements_analyzer,
-        expected_output='A structured summary of deployment requirements including app name, image, ports, replicas, and resources'
+        expected_output="A structured summary of deployment requirements including app name, image, ports, replicas, and resources",
     )
 
 
 def create_generation_task():
     """
     Create task for generating Kubernetes manifest
-    
+
     Returns:
         Task: Generation task instance
     """
@@ -61,14 +63,14 @@ def create_generation_task():
         Follow Kubernetes best practices and ensure the YAML is valid and production-ready.
         Output ONLY the YAML manifest without additional commentary.""",
         agent=iac_generator,
-        expected_output='A complete, valid Kubernetes Deployment YAML manifest'
+        expected_output="A complete, valid Kubernetes Deployment YAML manifest",
     )
 
 
 def create_validation_task():
     """
     Create task for validating the generated manifest
-    
+
     Returns:
         Task: Validation task instance
     """
@@ -85,17 +87,17 @@ def create_validation_task():
         If valid, respond with "VALIDATION PASSED" followed by the complete manifest.
         If issues found, list them clearly.""",
         agent=validator,
-        expected_output='Validation result with either the approved manifest or a list of issues to fix'
+        expected_output="Validation result with either the approved manifest or a list of issues to fix",
     )
 
 
 def create_monitoring_task(deployment_status):
     """
     Create task for monitoring deployment health
-    
+
     Args:
         deployment_status (str): Simulated deployment status information
-        
+
     Returns:
         Task: Monitoring task instance
     """
@@ -115,17 +117,17 @@ def create_monitoring_task(deployment_status):
         If failures detected, respond with "FAILURE DETECTED: [failure type]" and describe the issue.
         If deployment is healthy, respond with "DEPLOYMENT HEALTHY".""",
         agent=remediation_agent,
-        expected_output='Health status indicating either deployment success or specific failure type detected'
+        expected_output="Health status indicating either deployment success or specific failure type detected",
     )
 
 
 def create_diagnosis_task(failure_info):
     """
     Create task for diagnosing deployment failure
-    
+
     Args:
         failure_info (str): Information about the detected failure
-        
+
     Returns:
         Task: Diagnosis task instance
     """
@@ -142,18 +144,18 @@ def create_diagnosis_task(failure_info):
         
         Be specific and actionable in your diagnosis.""",
         agent=remediation_agent,
-        expected_output='Detailed diagnosis with root cause, impact, and specific remediation steps'
+        expected_output="Detailed diagnosis with root cause, impact, and specific remediation steps",
     )
 
 
 def create_remediation_task(diagnosis_result, original_manifest):
     """
     Create task for applying remediation fixes
-    
+
     Args:
         diagnosis_result (str): Diagnosis from previous task
         original_manifest (str): The original YAML manifest that failed
-        
+
     Returns:
         Task: Remediation task instance
     """
@@ -174,6 +176,5 @@ def create_remediation_task(diagnosis_result, original_manifest):
         
         Output the complete corrected YAML manifest with fixes applied.""",
         agent=remediation_agent,
-        expected_output='A corrected Kubernetes manifest with remediation fixes applied'
+        expected_output="A corrected Kubernetes manifest with remediation fixes applied",
     )
-
