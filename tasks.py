@@ -3,7 +3,7 @@ Task Definitions for DevOps Automation Workflow
 Defines the sequential tasks for processing deployment requests
 """
 from crewai import Task
-from agents import requirements_analyzer, iac_generator, validator, remediation_agent, app_generator
+from agents import requirements_analyzer, iac_generator, validator, remediation_agent, app_generator, file_agent
 
 def create_analysis_task(user_prompt):
     """
@@ -73,20 +73,35 @@ def create_app_generation_task():
             Task: App Generation Instance
     """
     return Task(
-       description="""Based on the analyzed requirements, you MUST use the provided tools to create actual files. Do NOT output any code or Dockerfile content as text in your response.
-
-        1. Application Type: Use the analyzed requirements (e.g., Node.js, Python, Java)
-        2. Functionality: Create a basic "Hello World" application that listens on the specified port and responds to HTTP requests.
-        3. Call the SaveAppCode tool for each source file (e.g., filename='app.js', code='[generated code]', subfolder='app')
-        4. Call the CreateDockerfile tool with the appropriate content (app_type='[type]', port='[port]', content='[dockerfile content]')
-        5. Ensure the code is clean, well-commented, and follows best practices.
-        6. The generated files must be compatible with the Kubernetes manifest.
-        7. After tool calls, provide build and run instructions referencing the created files.""",
+       description="""Generate a simple application codebase along with a Dockerfile based on the following user requirements:
+        1. Application type (e.g., web server, API service)
+        2. Programming language (e.g., Python, Node.js, Java)
+        3. Functionality (e.g., serves "Hello World" on a specified port)
+        Ensure the code is well-structured and the Dockerfile correctly sets up the environment to run the application.
+        Provide instructions on how to build and run the Docker container locally for testing purposes.""",
         agent=app_generator,
-        expected_output="""Tool call confirmations and build/run instructions (no code content in response).
-        """
+        expected_output="""A simple application codebase and a Dockerfile ready for containerization and deployment."""
     )
 
+
+def create_file_creation_task():
+    """
+    Create task for creating application code files and Dockerfile
+    Returns:
+        Task: File Creation task instance
+    """
+    return Task(
+        description=f"""Create the necessary application code files and Dockerfile based on the provided specifications.
+        Ensure that the files are well-structured and ready for deployment in a containerized environment.
+        Application Code:
+        {create_app_generation_task()}
+        Dockerfile Content:
+        {create_app_generation_task()}
+        Output a confirmation message along with the file paths where the code and Dockerfile have been saved""",
+        context=[create_app_generation_task()],
+        agent=file_agent,
+        expected_output='Confirmation of file creation along with file paths'
+    )
 
 def create_validation_task():
     """

@@ -4,7 +4,8 @@ Defines specialized agents for analyzing requirements and generating IaC scripts
 """
 from crewai import Agent
 from crewai import LLM
-from file_tools import write_file, create_dockerfile, save_app_code
+from crewai_tools import FileWriterTool
+# from file_tools import write_file, create_dockerfile, save_app_code
 from config import Config
 
 # Initialize LLM using CrewAI's LLM wrapper for Ollama
@@ -12,6 +13,12 @@ llm = LLM(
     model=f"ollama/{Config.DEFAULT_MODEL}",
     base_url=Config.OLLAMA_BASE_URL,
     api_key=Config.OLLAMA_API_KEY
+)
+
+#Initialize File Writer Tool
+file_writer_tool = FileWriterTool(
+    llm=llm,
+    verbose=Config.VERBOSE_LEVEL > 0   
 )
 
 
@@ -45,11 +52,24 @@ iac_generator = Agent(
 app_generator = Agent(
     role = 'Application Code Generator',
     goal='Generate a simple application codebase and dockerfile based on user requirements for testing infrastructure',
-    tools=[write_file, create_dockerfile, save_app_code],
     backstory="""You are a skilled software developer with experience in creating simple,
     functional applications in various programming languages. You can quickly generate a codebase
     that meets user requirements, along with a Dockerfile to containerize the application for deployment.
     """,
+    llm=llm,
+    verbose=Config.VERBOSE_LEVEL > 0,
+    allow_delegation=Config.ALLOW_DELEGATION
+)
+
+#File Creator Agent
+file_agent = Agent(
+    role = 'File Creation Specialist',
+    goal='Create and manage application code files and Dockerfiles based on user specifications',
+    # tools=[write_file, create_dockerfile, save_app_code],
+    tools=[file_writer_tool],
+    backstory="""You are an expert in file management and code generation. You excel at creating well-structured 
+    application code files and Dockerfiles based on user requirements. You ensure that all files are correctly formatted 
+    and ready for deployment in a containerized environment.""",    
     llm=llm,
     verbose=Config.VERBOSE_LEVEL > 0,
     allow_delegation=Config.ALLOW_DELEGATION
