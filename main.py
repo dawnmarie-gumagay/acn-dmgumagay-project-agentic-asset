@@ -7,17 +7,8 @@ import os
 import json
 from datetime import datetime
 from crewai import Crew, Process
-from agents import (
-    requirements_analyzer,
-    iac_generator,
-    validator,
-    remediation_agent
-)
-from tasks import (
-    create_analysis_task,
-    create_generation_task,
-    create_validation_task
-)
+from agents import requirements_analyzer, iac_generator, validator, remediation_agent
+from tasks import create_analysis_task, create_generation_task, create_validation_task
 from config import Config
 import logging
 

@@ -4,12 +4,7 @@ Defines the sequential tasks for processing deployment requests
 """
 
 from crewai import Task
-from agents import (
-    requirements_analyzer,
-    iac_generator,
-    validator,
-    remediation_agent
-)
+from agents import requirements_analyzer, iac_generator, validator, remediation_agent
 
 
 def create_analysis_task(user_prompt):
@@ -69,41 +64,6 @@ def create_generation_task():
         Output ONLY the YAML manifest without additional commentary.""",
         agent=iac_generator,
         expected_output="A complete, valid Kubernetes Deployment YAML manifest",
-    )
-
-
-def create_app_generation_task():
-    """
-    Create task for generating a sample codebase and dockerfile which can be used to validate
-    if infrastructure runs smoothly.
-
-    Returns:
-        Task: App Generation Instance
-    """
-    return Task(
-        description="""Generate a simple application codebase along with a Dockerfile based on the following user requirements:
-        1. Application type (e.g., web server, API service)
-        2. Programming language (e.g., Python, Node.js, Java)
-        3. Functionality (e.g., serves "Hello World" on a specified port)
-        Ensure the code is well-structured and the Dockerfile correctly sets up the environment to run the application.
-        Provide instructions on how to build and run the Docker container locally for testing purposes.""",
-        agent=app_generator,
-        expected_output="""A simple application codebase and a Dockerfile ready for containerization and deployment.""",
-    )
-
-
-def create_file_creation_task():
-    """
-    Create task for creating application code files and Dockerfile
-    Returns:
-        Task: File Creation task instance
-    """
-    return Task(
-        description=f"""Create the necessary application code files and Dockerfile based on the provided context.
-        Ensure that the files are well-structured and ready for deployment in a containerized environment.
-        Output a confirmation message along with the file paths where the code and Dockerfile have been saved.""",
-        agent=writer_agent,
-        expected_output="Confirmation of file creation along with file paths",
     )
 
 

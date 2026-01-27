@@ -16,7 +16,6 @@ llm = OllamaCloudGenerateLLM(
 )
 
 
-
 # Requirements Analyzer Agent
 requirements_analyzer = Agent(
     role="DevOps Requirements Analyst",
