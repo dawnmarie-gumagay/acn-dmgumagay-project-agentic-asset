@@ -61,8 +61,8 @@ app_generator = Agent(
     allow_delegation=Config.ALLOW_DELEGATION
 )
 
-#File Creator Agent
-file_agent = Agent(
+#Writer Agent
+writer_agent = Agent(
     role = 'File Creation Specialist',
     goal='Create and manage application code files and Dockerfiles based on user specifications',
     # tools=[write_file, create_dockerfile, save_app_code],

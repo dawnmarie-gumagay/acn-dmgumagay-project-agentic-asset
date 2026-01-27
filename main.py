@@ -6,7 +6,7 @@ import os
 import json
 from datetime import datetime
 from crewai import Crew, Process
-from agents import requirements_analyzer, iac_generator, app_generator, validator, remediation_agent, file_agent
+from agents import requirements_analyzer, iac_generator, app_generator, validator, remediation_agent, writer_agent
 from tasks import create_analysis_task, create_generation_task, create_app_generation_task, create_validation_task, create_file_creation_task
 from config import Config
 import logging
@@ -109,11 +109,12 @@ def run_crew(user_prompt):
     # Link tasks in sequence
     generation_task.context = [analysis_task]
     app_generation_task.context = [analysis_task]
+    file_creation_task.context = [app_generation_task]
     validation_task.context = [generation_task]
     
     # Assemble the crew
     crew = Crew(
-        agents=[requirements_analyzer, iac_generator, app_generator, file_agent, validator],
+        agents=[requirements_analyzer, iac_generator, app_generator, writer_agent, validator],
         tasks=[analysis_task, generation_task, app_generation_task, file_creation_task, validation_task],
         process=Process.sequential,
         verbose=True

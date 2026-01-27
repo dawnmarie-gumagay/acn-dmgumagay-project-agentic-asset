@@ -91,15 +91,10 @@ def create_file_creation_task():
         Task: File Creation task instance
     """
     return Task(
-        description=f"""Create the necessary application code files and Dockerfile based on the provided specifications.
+        description=f"""Create the necessary application code files and Dockerfile based on the provided context.
         Ensure that the files are well-structured and ready for deployment in a containerized environment.
-        Application Code:
-        {create_app_generation_task()}
-        Dockerfile Content:
-        {create_app_generation_task()}
-        Output a confirmation message along with the file paths where the code and Dockerfile have been saved""",
-        context=[create_app_generation_task()],
-        agent=file_agent,
+        Output a confirmation message along with the file paths where the code and Dockerfile have been saved.""",
+        agent=writer_agent,
         expected_output='Confirmation of file creation along with file paths'
     )
 
