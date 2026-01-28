@@ -4,8 +4,7 @@ Defines the sequential tasks for processing deployment requests
 """
 
 from crewai import Task
-from agents import requirements_analyzer, iac_generator, validator, remediation_agent
-
+from agents import requirements_analyzer, iac_generator, validator, remediation_agent, creator_agent, developer_agent
 
 def create_analysis_task(user_prompt):
     """
@@ -178,3 +177,57 @@ def create_remediation_task(diagnosis_result, original_manifest):
         agent=remediation_agent,
         expected_output="A corrected Kubernetes manifest with remediation fixes applied",
     )
+
+
+def create_project_task():
+    """
+    Create a composite task for end-to-end project execution
+
+    Returns:
+        Task: Composite project task instance
+    """
+    return Task(
+        description="""
+        Generate a simple project based on the given programming language.
+        The project should be:
+        - A simple "Hello, World!" application
+        - Include a README.md with instructions to run the application
+        - Structured with appropriate folders (e.g., src/, tests/)
+        - Use best practices for the chosen language
+        - A Dockerfile to containerize the application
+
+        Output should be a list of the files and their contents.
+        It should look like: 
+        [Item#1]
+        [start]
+        Path: <file_path>
+        Content: <content here>
+        [end]
+
+        The base path should be '/workspaces/acn-dmgumagay-project-agentic-asset/outputs/<project_name>/' where <project_name> is derived from the programming language.
+        
+        """,
+        agent=developer_agent,  # Composite task does not have a single agent
+        expected_output="List of project files with paths and contents",
+    )
+
+# def create_file_task():
+#     """
+#     Create task for file and directory operations
+
+#     Returns:
+#         Task: File operation task instance
+#     """
+#     return Task(
+#         description=
+#         """
+#         Create the files and directories as per the previous task's output.
+#         Extract the path and content for each file from the previous task output and format it to use the tool properly.
+#         For each item in the previous task output:
+#         1. Extract the path from "Path:" (excluding the file name at the end of the path ex: outputs/project/) then MUST call the "create_directory_tool" with this value.
+#         2. Extract the file name from the "Path:" and content from "Content:" then MUST call the "write_file_tool" with these values.
+#         Before giving final answer, MAKE sure that [write_file_tool] and [create_directory_tool] are called for each file and directory respectively.
+#         """,
+#         agent=creator_agent,
+#         expected_output="Return ONLY the raw results from the tool responses",
+#     )

@@ -19,6 +19,7 @@ class Config:
 
     # Model Configuration
     DEFAULT_MODEL = os.getenv("DEFAULT_MODEL", "llama2:7b")
+    DEFAULT_TEMPERATURE = float(os.getenv("DEFAULT_TEMPERATURE", "0.3"))
 
     # Logging Configuration
     VERBOSE_LEVEL = int(os.getenv("VERBOSE_LEVEL", "2"))

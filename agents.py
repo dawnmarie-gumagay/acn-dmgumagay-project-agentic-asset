@@ -6,12 +6,13 @@ Defines specialized agents for analyzing requirements and generating IaC scripts
 from crewai import Agent
 from ollama_cloud_llm import OllamaCloudGenerateLLM
 from config import Config
+from tools.tools import create_directory_tool, write_file_tool
 
 # Initialize using custom LLM
 llm = OllamaCloudGenerateLLM(
-    model="gpt-oss:120b",
+    model=Config.DEFAULT_MODEL,
     api_key=Config.OLLAMA_API_KEY,
-    temperature=0.3,
+    temperature=Config.DEFAULT_TEMPERATURE,
     stream=False,
 )
 
@@ -67,6 +68,35 @@ remediation_agent = Agent(
     such as adjusting resource limits, fixing configuration errors, scaling replicas, 
     or suggesting alternative approaches. You think systematically about root causes 
     and prefer permanent fixes over temporary workarounds.""",
+    llm=llm,
+    verbose=Config.VERBOSE_LEVEL > 0,
+    allow_delegation=Config.ALLOW_DELEGATION,
+)
+
+
+# Creator Agent
+creator_agent = Agent(
+    role="General File/Directory Creator",
+    goal="Create files and directories as requested",
+    backstory="""
+    You are a versatile file system operator who can understand relative and absolute paths, 
+    can handle naming conflicts, and ensure that files are created in the 
+    correct locations. You follow instructions carefully to meet user needs.""",
+    llm=llm,
+    verbose=Config.VERBOSE_LEVEL > 0,
+    allow_delegation=False,
+    tools=[write_file_tool, create_directory_tool]
+)
+
+# Developer Agent
+developer_agent = Agent(
+    role="Lead Developer",
+    goal="Create the codes and scripts needed for the project",
+    backstory="""You are a highly skilled software developer with expertise in
+    writing clean, efficient, and maintainable code. You are proficient in multiple
+    programming languages and frameworks, and you follow best practices for software
+    development. You are capable of understanding complex requirements and translating
+    them into functional code.""",
     llm=llm,
     verbose=Config.VERBOSE_LEVEL > 0,
     allow_delegation=Config.ALLOW_DELEGATION,

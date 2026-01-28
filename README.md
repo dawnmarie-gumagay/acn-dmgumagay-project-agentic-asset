@@ -288,6 +288,10 @@ def simulate_deployment(manifest, retry_count=0):
 - Check internet connectivity
 - Confirm Ollama Cloud service status
 - Try using test_connection.py to isolate the issue
+- Try via curl command:
+```
+curl -H "Authorization: Bearer $OLLAMA_API_KEY" -X POST https://api.ollama.cloud/api/generate -d '{"model": "gpt-oss:120b-cloud", "prompt": "test"}'
+```
 
 ### "Module not found"
 ```bash
@@ -351,7 +355,8 @@ python crew.py
 2. Create a feature branch
 3. Make your changes
 4. Test thoroughly
-5. Submit a pull request
+5. Use "black *.py" to format code for consistency
+6. Submit a pull request
 
 ## License
 

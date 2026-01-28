@@ -1,0 +1,180 @@
+# clean_ollama_chat_llm.py
+from __future__ import annotations
+
+import json
+from typing import Any, Dict, List, Optional, Union
+
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+from crewai import BaseLLM
+
+
+class CleanOllamaChatLLM(BaseLLM):
+    """
+    CrewAI LLM wrapper for Ollama Cloud's OpenAI-compatible Chat Completions API.
+
+    - Uses POST {base_url}/v1/chat/completions
+    - Sends messages + tools (OpenAI function-calling schema)
+    - Returns assistant message with tool_calls when present so CrewAI executes tools
+    - Returns plain string content when no tool_calls
+
+    Notes:
+      * Tool calling works via chat/completions only; /api/generate is text-only.
+      * base_url must be e.g. "https://ollama.com" (do NOT append "/v1").
+    """
+
+    def __init__(
+        self,
+        model: str,
+        api_key: Optional[str] = None,
+        base_url: str = "https://ollama.com",
+        temperature: Optional[float] = 0.0,
+        stream: bool = False,
+        connect_timeout: int = 10,
+        read_timeout: int = 180,
+        max_retries: int = 4,
+        backoff_factor: float = 1.5,
+        context_window: int = 128_000,
+    ):
+        super().__init__(model=model, temperature=temperature)
+        if not api_key:
+            raise RuntimeError("Missing OLLAMA_API_KEY for cloud calls.")
+        self.api_key = api_key
+        self.base_url = base_url.rstrip("/")
+        self._stream = stream
+        self._timeouts = (connect_timeout, read_timeout)
+        self._context_window = int(context_window)
+
+        # Robust session with retries for 429/5xx
+        self._session = requests.Session()
+        retry = Retry(
+            total=max_retries,
+            backoff_factor=backoff_factor,
+            status_forcelist=(429, 500, 502, 503, 504),
+            allowed_methods=["POST"],
+            raise_on_status=False,
+        )
+        self._session.mount("https://", HTTPAdapter(max_retries=retry))
+        self._session.mount("http://", HTTPAdapter(max_retries=retry))
+
+    # ---- CrewAI integration metadata ----
+    def supports_function_calling(self) -> bool:
+        """Tell CrewAI we support OpenAI-style function/tool calling."""
+        return True
+
+    def get_context_window_size(self) -> int:
+        """Inform CrewAI for summarization thresholds."""
+        return self._context_window
+
+    # ---- Main call ----
+    def call(
+        self,
+        messages: Union[str, List[Dict[str, str]]],
+        tools: Optional[List[dict]] = None,
+        callbacks: Optional[List[Any]] = None,
+        available_functions: Optional[Dict[str, Any]] = None,
+        **kwargs,
+    ) -> Union[str, Dict[str, Any]]:
+        """
+        Returns:
+          - dict (assistant message) when tool_calls are present
+          - str (assistant content) when plain text
+        """
+        # Ensure OpenAI chat 'messages' format
+        if isinstance(messages, str):
+            messages = [{"role": "user", "content": messages}]
+
+        payload: Dict[str, Any] = {
+            "model": self.model,
+            "messages": messages,
+            "stream": False,  # we selectively enable streaming below for text-only
+        }
+
+        # Forward tools when provided so the model can emit tool_calls
+        if tools and self.supports_function_calling():
+            payload["tools"] = tools
+            payload["tool_choice"] = "auto"
+
+        # Add temperature if set
+        if self.temperature is not None:
+            payload["temperature"] = float(self.temperature)
+
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
+
+        url = f"{self.base_url}/v1/chat/completions"
+
+        # If you want to stream, only do it for plain-text generations;
+        # streaming tool_calls is more involved (delta aggregation).
+        stream_requested = bool(self._stream and not tools)
+
+        if stream_requested:
+            payload["stream"] = True
+            content_parts: List[str] = []
+            with self._session.post(
+                url, headers=headers, json=payload, stream=True, timeout=self._timeouts
+            ) as r:
+                r.raise_for_status()
+                for raw in r.iter_lines(decode_unicode=True):
+                    if not raw:
+                        continue
+                    # OpenAI-compatible streams typically prefix with 'data:'
+                    if raw.startswith("data:"):
+                        raw = raw[5:].strip()
+                    if raw == "[DONE]":
+                        break
+                    try:
+                        chunk = json.loads(raw)
+                        delta = (
+                            chunk.get("choices", [{}])[0]
+                            .get("delta", {})
+                        )
+                        if "content" in delta and delta["content"]:
+                            content_parts.append(delta["content"])
+                    except json.JSONDecodeError:
+                        # Ignore keepalive/heartbeat lines
+                        continue
+
+            final = "".join(content_parts).strip()
+            if not final:
+                raise ValueError("Empty streaming output.")
+            return final
+
+        # Non-streaming path
+        r = self._session.post(
+            url, headers=headers, json=payload, timeout=self._timeouts
+        )
+        # Improve debuggability for HTML error pages (wrong base_url, missing auth, etc.)
+        content_type = r.headers.get("Content-Type", "")
+        if "text/html" in content_type.lower():
+            snippet = r.text[:500].replace("\n", " ")
+            raise RuntimeError(
+                f"Expected JSON from chat/completions; got HTML (status={r.status_code}). "
+                f"Check base_url, endpoint path, Authorization header, and model tag. "
+                f"Body: {snippet}"
+            )
+
+        r.raise_for_status()
+        data = r.json()
+
+        # Extract assistant message
+        choice0 = (data.get("choices") or [{}])[0]
+        msg = choice0.get("message", {}) if isinstance(choice0, dict) else {}
+
+        # TOOL-CALL BRANCH: return the entire assistant message dict so CrewAI will execute the tool
+        if msg.get("tool_calls"):
+            return msg
+
+        # CONTENT BRANCH: return plain text
+        content = (msg.get("content") or "").strip()
+        if not content:
+            # Surface provider errors clearly if present
+            provider_err = (data.get("error") or {}).get("message")
+            if provider_err:
+                raise ValueError(f"Provider error: {provider_err}")
+            raise ValueError("Empty LLM output.")
+        return content
